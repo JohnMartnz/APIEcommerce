@@ -1,0 +1,6 @@
+@APIEcommerce_HostAddress = http://localhost:5132
+
+GET {{APIEcommerce_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
