@@ -1,14 +1,20 @@
+using APIEcommerce.Constants;
 using APIEcommerce.Models;
 using APIEcommerce.Models.Dtos;
 using APIEcommerce.Repository.IRepository;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace APIEcommerce.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
+    // [EnableCors(PolicyNames.AllowSpecificOrigin)]
     public class CategoryController : ControllerBase
     {
         private const string ERROR_KEY = "CustomError";
@@ -21,9 +27,11 @@ namespace APIEcommerce.Controllers
             _mapper = mapper;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        // [EnableCors(PolicyNames.AllowSpecificOrigin)]
         public ActionResult<IEnumerable<CategoryDto>> GetCategories()
         {
             ICollection<Category> categories = _categoryRepository.GetCategories();
@@ -36,6 +44,7 @@ namespace APIEcommerce.Controllers
             return Ok(categories);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id:int}", Name = "GetCategory")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
