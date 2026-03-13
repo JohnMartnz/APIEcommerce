@@ -1,6 +1,7 @@
 using APIEcommerce.Models;
 using APIEcommerce.Models.Dtos;
 using APIEcommerce.Repository.IRepository;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -8,8 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIEcommerce.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersionNeutral]
     [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
