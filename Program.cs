@@ -4,10 +4,12 @@ using APIEcommerce.Data;
 using APIEcommerce.Helpers;
 using APIEcommerce.Repository;
 using APIEcommerce.Repository.IRepository;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,9 +61,73 @@ builder.Services.AddControllers(options =>
     options.CacheProfiles.Add(CacheProfiles.Default20, CacheProfiles.Profile20);
 });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi(options =>
+builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info = new OpenApiInfo
+        {
+            Title = "API Ecommerce",
+            Version = "v1",
+            Description = "API to handle products",
+            TermsOfService = new Uri("https://example.com/terms"),
+            Contact = new OpenApiContact
+            {
+                Name = "JohnDoe",
+                Url = new Uri("https://johndoe.com")
+            },
+            License = new OpenApiLicense
+            {
+                Name = "Use License",
+                Url = new Uri("http://example.com/licenses")
+            }
+        };
+
+        return Task.CompletedTask;
+    });
+});
+
+builder.Services.AddOpenApi("v2", options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.ShouldInclude = (description) => description.GroupName == "v2";
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Info = new OpenApiInfo
+        {
+            Title = "API Ecommerce",
+            Version = "v2",
+            Description = "v2 - API Ecommerce",
+            Contact = new OpenApiContact
+            {
+                Name = "JohnDoe",
+                Url = new Uri("https://johndoe.com")
+            },
+            License = new OpenApiLicense
+            {
+                Name = "Use License",
+                Url = new Uri("http://example.com/licenses")
+            }
+        };
+
+        return Task.CompletedTask;
+    });
+});
+
+var apiVersioningBuilder = builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+    // options.ApiVersionReader = ApiVersionReader.Combine(new QueryStringApiVersionReader("api-version"));
+});
+
+apiVersioningBuilder.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
 });
 
 builder.Services.AddCors(options =>
