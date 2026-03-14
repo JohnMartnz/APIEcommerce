@@ -29,20 +29,20 @@ namespace APIEcommerce.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<ICollection<UserDto>> GetUsers()
         {
-            IEnumerable<User> users = _userRepository.GetUsers();
+            IEnumerable<ApplicationUser> users = _userRepository.GetUsers();
             List<UserDto> userDto = _mapper.Map<List<UserDto>>(users);
 
             return Ok(userDto);
         }
 
-        [HttpGet("{id}:int", Name = "GetUser")]
+        [HttpGet("{id}", Name = "GetUser")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<UserDto> GetUser(int id)
+        public async Task<ActionResult<UserDto>> GetUser(string id)
         {
-            User? user = _userRepository.GetUser(id);
+            ApplicationUser? user = _userRepository.GetUser(id);
             if (user == null)
             {
                 return NotFound($"User with id {id} does not found");
@@ -76,7 +76,7 @@ namespace APIEcommerce.Controllers
                 return BadRequest("User already exists");
             }
 
-            User result = await _userRepository.Register(createUserDto);
+            UserDataDto result = await _userRepository.Register(createUserDto);
             if (result == null)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Something went wrong trying to create user {createUserDto.Username}");
