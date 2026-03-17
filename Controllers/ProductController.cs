@@ -58,12 +58,13 @@ namespace APIEcommerce.Controllers
         }
 
         [HttpPost]
+        [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult CreateProduct([FromBody] CreateProductDto createProductDto)
+        public IActionResult CreateProduct([FromForm] CreateProductDto createProductDto)
         {
             if (createProductDto == null)
             {
@@ -83,6 +84,9 @@ namespace APIEcommerce.Controllers
             }
 
             Product product = _mapper.Map<Product>(createProductDto);
+            // Adding Image
+            UploadProductImage(createProductDto, product);
+
             if (!_productRepository.CreateProduct(product))
             {
                 ModelState.AddModelError("CustomError", $"Something went wrong trying to create {createProductDto.Name}");
@@ -92,6 +96,38 @@ namespace APIEcommerce.Controllers
             Product createdProduct = _productRepository.GetProduct(product.ProductId)!;
             ProductDto productDto = _mapper.Map<ProductDto>(createdProduct);
             return CreatedAtRoute("GetProduct", new { id = product.ProductId }, productDto);
+        }
+
+        private void UploadProductImage(dynamic productDto, Product product)
+        {
+            if (productDto.Image != null)
+            {
+                string fileName = product.ProductId + Guid.NewGuid().ToString() + Path.GetExtension(productDto.Image.FileName);
+                var imageFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ProductsImages");
+
+                if (!Directory.Exists(imageFolder))
+                {
+                    Directory.CreateDirectory(imageFolder);
+                }
+
+                string filePath = Path.Combine(imageFolder, fileName);
+                FileInfo file = new FileInfo(filePath);
+
+                if (file.Exists)
+                {
+                    file.Delete();
+                }
+
+                using FileStream fileStream = new FileStream(filePath, FileMode.Create);
+                productDto.Image.CopyTo(fileStream);
+                var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.PathBase.Value}";
+                product.ImageUrl = $"{baseUrl}/ProductsImages/{fileName}";
+                product.ImageUrlLocal = filePath;
+            }
+            else
+            {
+                product.ImageUrl = "https://placehold.co/600x400";
+            }
         }
 
         [HttpGet("searchProductByCategory/{categoryId:int}", Name = "GetProductForCategory")]
@@ -171,7 +207,7 @@ namespace APIEcommerce.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult UpdateProduct(int productId, [FromBody] CreateProductDto updateProductDto)
+        public IActionResult UpdateProduct(int productId, [FromForm] UpdateProductDto updateProductDto)
         {
             if (updateProductDto == null)
             {
@@ -192,6 +228,9 @@ namespace APIEcommerce.Controllers
 
             Product product = _mapper.Map<Product>(updateProductDto);
             product.ProductId = productId;
+
+            UploadProductImage(updateProductDto, product);
+
             if (!_productRepository.UpdateProduct(product))
             {
                 ModelState.AddModelError("CustomError", $"Something went wrong trying to update {updateProductDto.Name}");
