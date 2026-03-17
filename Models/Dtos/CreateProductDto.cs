@@ -9,7 +9,9 @@ public class CreateProductDto
 
   public decimal Price { get; set; }
 
-  public string ImageUrl { get; set; } = string.Empty;
+  public string? ImageUrl { get; set; } = string.Empty;
+
+  public IFormFile? Image { get; set; }
 
   public string SKU { get; set; } = string.Empty; // PRO-001-BLK-M
 
