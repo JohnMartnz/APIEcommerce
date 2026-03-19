@@ -1,15 +1,21 @@
 using System;
 using APIEcommerce.Models;
 using APIEcommerce.Models.Dtos;
-using AutoMapper;
+using Mapster;
 
 namespace APIEcommerce.Mapping;
 
-public class CategoryProfile : Profile
+public class CategoryProfile
 {
-  public CategoryProfile()
+  public static void Configure()
   {
-    CreateMap<Category, CategoryDto>().ReverseMap();
-    CreateMap<Category, CreateCategoryDto>().ReverseMap();
+    TypeAdapterConfig<Category, CategoryDto>.NewConfig();
+    TypeAdapterConfig<CategoryDto, Category>.NewConfig();
+
+    TypeAdapterConfig<IEnumerable<Category>, List<CategoryDto>>.NewConfig();
+    TypeAdapterConfig<ICollection<Category>, List<CategoryDto>>.NewConfig();
+
+    TypeAdapterConfig<Category, CreateCategoryDto>.NewConfig();
+    TypeAdapterConfig<CreateCategoryDto, Category>.NewConfig();
   }
 }
