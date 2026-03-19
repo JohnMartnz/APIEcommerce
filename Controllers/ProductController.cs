@@ -1,8 +1,9 @@
+using APIEcommerce.Helpers;
 using APIEcommerce.Models;
 using APIEcommerce.Models.Dtos;
+using APIEcommerce.Models.Dtos.Responses;
 using APIEcommerce.Repository.IRepository;
 using Asp.Versioning;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -267,6 +268,42 @@ namespace APIEcommerce.Controllers
             }
 
             return NoContent();
+        }
+
+        [AllowAnonymous]
+        [HttpGet("Paged", Name = "GetProductInPage")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public IActionResult GetProductInPage([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
+        {
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                return BadRequest("Parameters of pagination are invalid");
+            }
+
+            int totalProducts = _productRepository.GetTotalProducts();
+            int totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
+
+            if (pageNumber > totalPages)
+            {
+                return NotFound("There are not more pages");
+            }
+
+            IEnumerable<Product> products = _productRepository.GetProductsInPages(pageNumber, pageSize);
+            List<ProductDto> productDto = _mapper.Map<List<ProductDto>>(products);
+
+            var paginationResponse = new PaginationResponse<ProductDto>
+            {
+                Items = productDto,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                TotalItems = totalProducts
+            };
+
+            return Ok(paginationResponse);
         }
     }
 }
