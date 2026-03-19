@@ -2,6 +2,7 @@ using System.Text;
 using APIEcommerce.Constants;
 using APIEcommerce.Data;
 using APIEcommerce.Helpers;
+using APIEcommerce.Mapping;
 using APIEcommerce.Models;
 using APIEcommerce.Repository;
 using APIEcommerce.Repository.IRepository;
@@ -18,14 +19,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var dbConnectionString = builder.Configuration.GetConnectionString("ConexionSql");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(dbConnectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+  options.UseSqlServer(dbConnectionString)
+  .UseSeeding((context, _) =>
+  {
+      var appContext = (ApplicationDbContext)context;
+
+      DataSeeder.SeedData(appContext);
+  })
+);
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddMaps(typeof(Program).Assembly);
-});
+
+// Configure Mapster
+CategoryProfile.Configure();
+ProductProfile.Configure();
+UserProfile.Configure();
+builder.Services.AddScoped<IMapper, MapsterAdapter>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
